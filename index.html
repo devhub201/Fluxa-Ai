@@ -1,111 +1,303 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Fluxa AI | Secure Portal</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
-    
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
-        :root { --blue-primary: #4285f4; }
-        body { font-family: 'Inter', sans-serif; background-color: #f9fafb; overflow: hidden; }
-        .dark body { background-color: #131314; color: #e3e3e3; }
-        #sidebar { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 40; }
-        .auth-card { animation: slideUp 0.5s ease-out; }
-        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        pre { border-radius: 0.5rem; margin: 1rem 0; background: #1e1e1e !important; }
-        .message-user { background: #e9eef6; border-radius: 1.2rem 1.2rem 0 1.2rem; }
-        .dark .message-user { background: #2b2b2b; }
-        @media (max-width: 768px) { #sidebar { transform: translateX(-100%); } #sidebar.open { transform: translateX(0); } }
-    </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Fluxa AI</title>
+
+<!-- Tailwind CDN -->
+<script src="https://cdn.tailwindcss.com"></script>
+
+<!-- Marked.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+<style>
+html, body {
+  height: 100%;
+}
+.chat-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+.chat-scroll::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 10px;
+}
+.dark .chat-scroll::-webkit-scrollbar-thumb {
+  background: #374151;
+}
+</style>
 </head>
-<body class="transition-colors duration-200">
 
-    <div id="auth-overlay" class="fixed inset-0 z-[100] bg-white dark:bg-[#131314] flex items-center justify-center p-4">
-        <div class="auth-card w-full max-w-md p-8 bg-white dark:bg-[#1e1f20] rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-800 text-center">
-            <div class="mb-6">
-                <div class="w-16 h-16 bg-blue-600 rounded-2xl mx-auto flex items-center justify-center mb-4 shadow-lg shadow-blue-500/30">
-                    <span class="text-white text-3xl font-bold">F</span>
-                </div>
-                <h2 class="text-2xl font-bold">Welcome to Fluxa AI</h2>
-                <p class="text-gray-500 mt-2">Sign in to start your session</p>
-            </div>
-            <div class="space-y-4">
-                <input type="email" id="auth-email" placeholder="Enter your email" class="w-full p-4 rounded-xl border dark:bg-black dark:border-gray-700 outline-none focus:ring-2 focus:ring-blue-500 transition-all">
-                <button onclick="handleLogin()" class="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-all active:scale-95">Continue</button>
-                <p class="text-xs text-gray-400">By continuing, you agree to Fluxa's terms of service.</p>
-            </div>
-        </div>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen flex flex-col">
+
+<!-- Loader -->
+<div id="loading" class="fixed inset-0 flex items-center justify-center bg-white dark:bg-gray-900 z-50">
+  <div class="text-xl font-semibold animate-pulse">Loading Fluxa AI...</div>
+</div>
+
+<div class="flex flex-1 overflow-hidden">
+
+  <!-- Sidebar -->
+  <aside id="sidebar" class="w-72 bg-white dark:bg-gray-800 border-r dark:border-gray-700 flex flex-col transition-transform duration-300 md:translate-x-0 -translate-x-full fixed md:static z-40 h-full">
+    <div class="p-4 flex justify-between items-center border-b dark:border-gray-700">
+      <h1 class="font-bold text-lg">Fluxa AI</h1>
+      <button id="closeSidebar" class="md:hidden text-xl">✕</button>
     </div>
 
-    <div id="app-shell" class="hidden flex h-screen w-full relative">
-        
-        <aside id="sidebar" class="fixed md:static inset-y-0 left-0 w-[280px] bg-[#f0f4f9] dark:bg-[#1e1f20] flex flex-col p-4 border-r border-gray-200 dark:border-gray-800">
-            <div class="flex items-center justify-between mb-8">
-                <div class="flex items-center gap-2">
-                    <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-xs">F</div>
-                    <span class="font-bold text-lg tracking-tight">Fluxa AI</span>
-                </div>
-                <button onclick="toggleSidebar()" class="md:hidden p-2">✕</button>
-            </div>
-
-            <button onclick="createNewChat()" class="flex items-center gap-3 w-full p-4 bg-gray-200 dark:bg-[#2b2b2b] hover:bg-gray-300 dark:hover:bg-gray-700 rounded-2xl transition-all mb-6">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                <span class="text-sm font-semibold">New Chat</span>
-            </button>
-
-            <div id="chat-history" class="flex-1 overflow-y-auto no-scrollbar space-y-1"></div>
-
-            <div class="mt-auto pt-4 border-t border-gray-200 dark:border-gray-700 space-y-1">
-                <div id="admin-entry"></div>
-                <button onclick="toggleDarkMode()" class="w-full flex items-center gap-3 px-3 py-3 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
-                    <span class="text-sm">Appearance</span>
-                </button>
-                <button onclick="handleLogout()" class="w-full flex items-center gap-3 px-3 py-3 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                    <span class="text-sm">Sign Out</span>
-                </button>
-            </div>
-        </aside>
-
-        <main class="flex-1 flex flex-col h-full bg-white dark:bg-[#131314]">
-            <header class="h-16 flex items-center justify-between px-6 border-b border-gray-100 dark:border-gray-800">
-                <button onclick="toggleSidebar()" class="md:hidden p-2 -ml-2">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
-                </button>
-                <div class="flex items-center gap-4">
-                    <span id="active-model" class="text-xs font-bold uppercase tracking-widest text-gray-400">GPT-4o</span>
-                </div>
-                <div id="user-badge" class="w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center text-white text-xs font-bold uppercase"></div>
-            </header>
-
-            <div id="chat-window" class="flex-1 overflow-y-auto p-4 md:p-8 space-y-8 no-scrollbar pb-32">
-                <div id="empty-state" class="h-full flex flex-col items-center justify-center opacity-40">
-                    <h1 class="text-5xl font-bold mb-4">Fluxa AI</h1>
-                    <p class="text-lg">How can I help you today?</p>
-                </div>
-            </div>
-
-            <div class="p-4 bg-white dark:bg-[#131314]">
-                <div class="max-w-4xl mx-auto relative group">
-                    <textarea id="main-input" rows="1" placeholder="Type a message..." class="w-full p-4 pr-16 rounded-2xl border border-gray-200 dark:border-gray-800 bg-[#f0f4f9] dark:bg-[#1e1f20] focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none shadow-sm transition-all"></textarea>
-                    <button onclick="sendMessage()" class="absolute right-3 bottom-3 p-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/20">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="3" d="M5 12h14M12 5l7 7-7 7"></path></svg>
-                    </button>
-                </div>
-            </div>
-        </main>
+    <div class="p-2">
+      <button id="newChatBtn" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition">
+        + New Chat
+      </button>
     </div>
 
-    <div id="admin-modal" class="fixed inset-0 z-[110] bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
-        <div class="bg-white dark:bg-[#1e1f20] w-full max-w-lg rounded-3xl overflow-hidden shadow-2xl">
-            <div class="p-6 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center">
+    <div id="chatList" class="flex-1 overflow-y-auto chat-scroll p-2 space-y-2"></div>
+
+    <div class="p-3 border-t dark:border-gray-700 text-sm space-y-2">
+      <button id="darkToggle" class="w-full py-1 rounded bg-gray-200 dark:bg-gray-700">
+        Toggle Dark Mode
+      </button>
+      <button id="openSettings" class="w-full py-1 rounded bg-gray-200 dark:bg-gray-700">
+        Settings
+      </button>
+      <button id="openAdmin" class="hidden w-full py-1 rounded bg-red-500 text-white">
+        Admin Panel
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="flex-1 flex flex-col relative min-h-screen">
+
+    <!-- Mobile Header -->
+    <div class="md:hidden p-3 border-b dark:border-gray-700 flex justify-between items-center">
+      <button id="openSidebar" class="text-2xl">☰</button>
+      <span class="font-semibold">Fluxa AI</span>
+    </div>
+
+    <!-- Chat Messages -->
+    <div id="chatContainer" class="flex-1 overflow-y-auto chat-scroll p-4 space-y-4 pb-32"></div>
+
+    <!-- Input Bar -->
+    <div class="fixed bottom-0 left-0 md:left-72 right-0 bg-white dark:bg-gray-800 border-t dark:border-gray-700 p-3">
+      <div class="max-w-4xl mx-auto flex gap-2">
+        <textarea id="messageInput" rows="1"
+          class="flex-1 resize-none rounded-lg border dark:border-gray-600 p-2 bg-gray-100 dark:bg-gray-700 focus:outline-none"
+          placeholder="Type your message..."></textarea>
+        <button id="sendBtn"
+          class="bg-blue-600 text-white px-4 rounded-lg hover:bg-blue-700 transition">
+          Send
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Settings Modal -->
+<div id="settingsModal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+  <div class="bg-white dark:bg-gray-800 p-6 rounded-xl w-96 space-y-4">
+    <h2 class="font-bold text-lg">Settings</h2>
+    <input id="apiKeyInput" type="password" placeholder="OpenAI API Key"
+      class="w-full p-2 rounded border dark:border-gray-600 bg-gray-100 dark:bg-gray-700">
+    <input id="modelInput" type="text" placeholder="Model (gpt-4o-mini)"
+      class="w-full p-2 rounded border dark:border-gray-600 bg-gray-100 dark:bg-gray-700">
+    <textarea id="systemPromptInput" placeholder="System Prompt"
+      class="w-full p-2 rounded border dark:border-gray-600 bg-gray-100 dark:bg-gray-700"></textarea>
+    <div class="flex justify-end gap-2">
+      <button id="closeSettings" class="px-4 py-1 bg-gray-300 dark:bg-gray-600 rounded">Close</button>
+      <button id="saveSettings" class="px-4 py-1 bg-blue-600 text-white rounded">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Admin Modal -->
+<div id="adminModal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+  <div class="bg-white dark:bg-gray-800 p-6 rounded-xl w-[420px] space-y-4">
+    <h2 class="font-bold text-lg text-red-500">Admin Panel</h2>
+    <input id="adminEmailInput" type="email" placeholder="Admin Email"
+      class="w-full p-2 rounded border dark:border-gray-600 bg-gray-100 dark:bg-gray-700">
+    <button id="saveAdminEmail" class="bg-red-500 text-white px-4 py-2 rounded w-full">
+      Save Admin Email
+    </button>
+    <button id="closeAdmin" class="w-full bg-gray-400 py-2 rounded">
+      Close
+    </button>
+  </div>
+</div>
+
+<!-- SCRIPT AT END -->
+<script>
+(function(){
+
+const ADMIN_EMAIL = "anujgupta20010@gmail.com";
+
+const chatContainer = document.getElementById("chatContainer");
+const chatList = document.getElementById("chatList");
+const sidebar = document.getElementById("sidebar");
+
+let chats = JSON.parse(localStorage.getItem("fluxa_chats") || "{}");
+let currentChatId = localStorage.getItem("fluxa_current") || null;
+
+function saveChats(){
+  localStorage.setItem("fluxa_chats", JSON.stringify(chats));
+}
+
+function createChat(){
+  const id = Date.now().toString();
+  chats[id] = { title: "New Chat", messages: [] };
+  currentChatId = id;
+  saveChats();
+  localStorage.setItem("fluxa_current", id);
+  renderChats();
+  renderMessages();
+}
+
+function renderChats(){
+  chatList.innerHTML = "";
+  Object.keys(chats).forEach(id=>{
+    const div = document.createElement("div");
+    div.className = "p-2 rounded cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700";
+    div.textContent = chats[id].title;
+    div.onclick = ()=>{ currentChatId=id; renderMessages(); };
+    chatList.appendChild(div);
+  });
+}
+
+function renderMessages(){
+  chatContainer.innerHTML = "";
+  if(!currentChatId || !chats[currentChatId]) return;
+  chats[currentChatId].messages.forEach(m=>{
+    const div = document.createElement("div");
+    div.className = m.role==="user" 
+      ? "text-right"
+      : "text-left";
+    const bubble = document.createElement("div");
+    bubble.className = m.role==="user"
+      ? "inline-block bg-blue-600 text-white px-4 py-2 rounded-xl"
+      : "inline-block bg-gray-200 dark:bg-gray-700 px-4 py-2 rounded-xl";
+    bubble.innerHTML = marked.parse(m.content);
+    div.appendChild(bubble);
+    chatContainer.appendChild(div);
+  });
+  chatContainer.scrollTop = chatContainer.scrollHeight;
+}
+
+async function sendMessage(){
+  const input = document.getElementById("messageInput");
+  const text = input.value.trim();
+  if(!text || !currentChatId) return;
+  input.value="";
+
+  chats[currentChatId].messages.push({role:"user", content:text});
+  renderMessages();
+  saveChats();
+
+  const aiMessage = {role:"assistant", content:""};
+  chats[currentChatId].messages.push(aiMessage);
+  renderMessages();
+
+  const apiKey = localStorage.getItem("fluxa_apiKey");
+  const model = localStorage.getItem("fluxa_model") || "gpt-4o-mini";
+  const systemPrompt = localStorage.getItem("fluxa_system") || "You are a helpful AI.";
+
+  try{
+    const response = await fetch("https://api.openai.com/v1/chat/completions",{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        "Authorization":"Bearer "+apiKey
+      },
+      body:JSON.stringify({
+        model:model,
+        stream:true,
+        messages:[
+          {role:"system", content:systemPrompt},
+          ...chats[currentChatId].messages
+        ]
+      })
+    });
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder("utf-8");
+
+    while(true){
+      const {value, done} = await reader.read();
+      if(done) break;
+      const chunk = decoder.decode(value);
+      chunk.split("\n").forEach(line=>{
+        if(line.startsWith("data: ")){
+          const data = line.replace("data: ","");
+          if(data==="[DONE]") return;
+          try{
+            const json = JSON.parse(data);
+            const token = json.choices[0].delta.content;
+            if(token){
+              aiMessage.content += token;
+              renderMessages();
+            }
+          }catch(e){}
+        }
+      });
+    }
+
+  }catch(err){
+    aiMessage.content = "⚠ Error: "+err.message;
+    renderMessages();
+  }
+
+  saveChats();
+}
+
+document.getElementById("sendBtn").onclick = sendMessage;
+document.getElementById("newChatBtn").onclick = createChat;
+document.getElementById("openSidebar").onclick = ()=> sidebar.classList.remove("-translate-x-full");
+document.getElementById("closeSidebar").onclick = ()=> sidebar.classList.add("-translate-x-full");
+
+document.getElementById("darkToggle").onclick = ()=>{
+  document.documentElement.classList.toggle("dark");
+  localStorage.setItem("fluxa_dark", document.documentElement.classList.contains("dark"));
+};
+
+if(localStorage.getItem("fluxa_dark")==="true"){
+  document.documentElement.classList.add("dark");
+}
+
+document.getElementById("openSettings").onclick = ()=>{
+  document.getElementById("settingsModal").classList.remove("hidden");
+};
+document.getElementById("closeSettings").onclick = ()=>{
+  document.getElementById("settingsModal").classList.add("hidden");
+};
+
+document.getElementById("saveSettings").onclick = ()=>{
+  localStorage.setItem("fluxa_apiKey", document.getElementById("apiKeyInput").value);
+  localStorage.setItem("fluxa_model", document.getElementById("modelInput").value);
+  localStorage.setItem("fluxa_system", document.getElementById("systemPromptInput").value);
+  document.getElementById("settingsModal").classList.add("hidden");
+};
+
+if(ADMIN_EMAIL === "anujgupta20010@gmail.com"){
+  document.getElementById("openAdmin").classList.remove("hidden");
+}
+
+document.getElementById("openAdmin").onclick = ()=>{
+  document.getElementById("adminModal").classList.remove("hidden");
+};
+document.getElementById("closeAdmin").onclick = ()=>{
+  document.getElementById("adminModal").classList.add("hidden");
+};
+
+document.getElementById("loading").style.display="none";
+
+if(!currentChatId) createChat();
+renderChats();
+renderMessages();
+
+})();
+</script>
+
+</body>
+</html>            <div class="p-6 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center">
                 <h3 class="font-bold text-xl">Admin Settings</h3>
                 <button onclick="closeAdmin()" class="text-2xl">&times;</button>
             </div>
